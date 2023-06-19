@@ -6,8 +6,8 @@ from time import sleep
 from subprocess import Popen
 import faiss
 from random import shuffle
-import json, datetime
-
+import json, datetime, requests
+from gtts import gTTS
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 tmp = os.path.join(now_dir, "TEMP")
@@ -1593,7 +1593,7 @@ def download_from_url(url, model):
             MODELEPOCH = '404'
         for file in files:
             file_path = os.path.join(root, file)
-            if file.endswith(".npy") or file.endswith(".index"):
+            if file.endswith(".index"):
                 subprocess.run(["mkdir", "-p", f"./logs/{model}"])
                 subprocess.run(["mv", file_path, f"./logs/{model}/"])
             elif "G_" not in file and "D_" not in file and file.endswith(".pth"):
@@ -1602,6 +1602,35 @@ def download_from_url(url, model):
     shutil.rmtree("unzips")
     return "Success."
 
+def elevenTTS(xiapi, text, id):
+    if xiapi!= '':
+        CHUNK_SIZE = 1024
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{id}"
+        headers = {
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": xiapi
+        }
+
+        data = {
+        "text": text,
+        "model_id": "eleven_monolingual_v1",
+        "voice_settings": {
+          "stability": 0.5,
+          "similarity_boost": 0.5
+        }
+        }
+
+        response = requests.post(url, json=data, headers=headers)
+        with open('./temp_eleven.mp3', 'wb') as f:
+          for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+              if chunk:
+                  f.write(chunk)
+        return save_to_wav('./temp_eleven.mp3')
+    else:
+        tts = gTTS(text)
+        tts.save('./temp_gTTS.mp3')
+        return save_to_wav('./temp_gTTS.mp3')
 with gr.Blocks(theme=gr.themes.Base()) as app:
     with gr.Tabs():
         with gr.TabItem("Inference"):
@@ -1655,6 +1684,19 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                         refresh_button2.click(fn=change_choices2, inputs=[], outputs=[input_audio0])
                         record_button.change(fn=save_to_wav, inputs=[record_button], outputs=[input_audio0])
                         record_button.change(fn=change_choices2, inputs=[], outputs=[input_audio0])
+                    with gr.Row():
+                        with gr.Accordion('Text To Speech', open=False):
+                            with gr.Row():
+                              with gr.Column():
+                                  api_box = gr.Textbox(label="Enter your API Key for ElevenLabs, or leave empty to use GoogleTTS", value='')
+                              with gr.Column():
+                                  elevenid=gr.Textbox(label="Voice ID (Get it from https://api.elevenlabs.io/v1/voices)", value='pNInz6obpgDQGcFmaJgB')
+                            with gr.Row():
+                                with gr.Column():
+                                    tfs = gr.Textbox(label="Input your Text", interactive=True, value="no")
+                                with gr.Column():
+                                    tts_button = gr.Button(value="Speak")
+                                    tts_button.click(fn=elevenTTS, inputs=[api_box,tfs, elevenid], outputs=[input_audio0])
                 with gr.Column():
                     with gr.Accordion("Index Settings", open=True):
                         file_index1 = gr.Dropdown(
@@ -1750,6 +1792,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                     ],
                     [vc_output1, vc_output2],
                 )
+                        
             with gr.Accordion("Batch Conversion",open=False):
                 with gr.Row():
                     with gr.Column():
