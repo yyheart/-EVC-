@@ -1630,7 +1630,8 @@ def elevenTTS(xiapi, text, id):
     else:
         tts = gTTS(text)
         tts.save('./temp_gTTS.mp3')
-        return save_to_wav('./temp_gTTS.mp3')
+        new_wav = save_to_wav('./temp_gTTS.mp3')
+        return new_wav, new_wav
 with gr.Blocks(theme=gr.themes.Base()) as app:
     with gr.Tabs():
         with gr.TabItem("Inference"):
@@ -1696,7 +1697,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                                     tfs = gr.Textbox(label="Input your Text", interactive=True, value="no")
                                 with gr.Column():
                                     tts_button = gr.Button(value="Speak")
-                                    tts_button.click(fn=elevenTTS, inputs=[api_box,tfs, elevenid], outputs=[input_audio0])
+                                    tts_button.click(fn=elevenTTS, inputs=[api_box,tfs, elevenid], outputs=[input_audio0, record_button])
                 with gr.Column():
                     with gr.Accordion("Index Settings", open=True):
                         file_index1 = gr.Dropdown(
