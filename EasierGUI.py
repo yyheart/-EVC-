@@ -1545,11 +1545,14 @@ def save_to_wav2(dropbox):
 def match_index(sid0):
     folder=sid0.split(".")[0]
     parent_dir="./logs/"+folder
-    for filename in os.listdir(parent_dir):
-        if filename.endswith(".index"):
-            index_path=os.path.join(parent_dir,filename)
-            return index_path
-            
+    if os.path.exists(parent_dir):
+        for filename in os.listdir(parent_dir):
+            if filename.endswith(".index"):
+                index_path=os.path.join(parent_dir,filename)
+                return index_path
+    else:
+        return ''
+                
 def check_for_name():
     if len(names) > 0:
         return sorted(names)[0]
