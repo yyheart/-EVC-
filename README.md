@@ -4,7 +4,7 @@
 
 ```bash
 !git clone https://github.com/777gt/EasyGUI-RVC-Fork
-cd EasyGUU-RVC-Fork
+cd EasyGUI-RVC-Fork
 !pip install -r requirements.txt
 ```
 Now download the hubert base model into that folder too.
