@@ -1736,8 +1736,8 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                             minimum=1,
                             maximum=512,
                             step=1,
-                            label=i18n("crepe_hop_length"),
-                            value=160,
+                            label="Crepe Hop Length. Higher numbers will reduce the chance of extreme pitch changes but lower numbers will increase accuracy.",
+                            value=120,
                             interactive=True
                             )
                         filter_radius0 = gr.Slider(
@@ -1755,12 +1755,13 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                             value=0,
                             step=1,
                             interactive=True,
+                            visible=False
                             )
                         rms_mix_rate0 = gr.Slider(
                             minimum=0,
                             maximum=1,
                             label=i18n("输入源音量包络替换输出音量包络融合比例，越靠近1越使用输出包络"),
-                            value=1,
+                            value=0.21,
                             interactive=True,
                             )
                         protect0 = gr.Slider(
