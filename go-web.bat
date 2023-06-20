@@ -1,2 +1,2 @@
-runtime\python.exe infer-web.py --pycmd runtime\python.exe --port 7897
+python.exe EasierGUI.py --pycmd python.exe --port 7897
 pause
