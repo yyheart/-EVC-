@@ -1501,7 +1501,7 @@ def get_index():
     if check_for_name() != '':
         if config.iscolab:
             chosen_model=sorted(names)[0].split(".")[0]
-            logs_path="/content/Retrieval-based-Voice-Conversion-WebUI/logs/"+chosen_model
+            logs_path="./logs/"+chosen_model
             if os.path.exists(logs_path):
                 for file in os.listdir(logs_path):
                     if file.endswith(".index"):
@@ -1513,7 +1513,7 @@ def get_index():
 def get_indexes():
     indexes_list=[]
     if config.iscolab:
-        for dirpath, dirnames, filenames in os.walk("/content/Retrieval-based-Voice-Conversion-WebUI/logs/"):
+        for dirpath, dirnames, filenames in os.walk("./logs/"):
             for filename in filenames:
                 if filename.endswith(".index"):
                     indexes_list.append(os.path.join(dirpath,filename))
@@ -1594,10 +1594,10 @@ def download_from_url(url, model):
         for file in files:
             file_path = os.path.join(root, file)
             if file.endswith(".index"):
-                subprocess.run(["mkdir", "-p", f"./logs/{model}"])
-                subprocess.run(["mv", file_path, f"./logs/{model}/"])
+                os.mkdir(f'./logs/{model}')
+                shutil.copy2(file_path,f'./logs/{model}')
             elif "G_" not in file and "D_" not in file and file.endswith(".pth"):
-                subprocess.run(["mv", file_path, f"./weights/{model}.pth"])
+                shutil.copy(file_path,f'./weights/{model}.pth')
     shutil.rmtree("zips")
     shutil.rmtree("unzips")
     return "Success."
