@@ -1499,24 +1499,23 @@ for filename in os.listdir("./audios"):
         
 def get_index():
     if check_for_name() != '':
-        if config.iscolab:
-            chosen_model=sorted(names)[0].split(".")[0]
-            logs_path="./logs/"+chosen_model
-            if os.path.exists(logs_path):
-                for file in os.listdir(logs_path):
-                    if file.endswith(".index"):
-                        return os.path.join(logs_path, file)
+        chosen_model=sorted(names)[0].split(".")[0]
+        logs_path="./logs/"+chosen_model
+        if os.path.exists(logs_path):
+            for file in os.listdir(logs_path):
+                if file.endswith(".index"):
+                    return os.path.join(logs_path, file)
             return ''
         else:
             return ''
         
 def get_indexes():
     indexes_list=[]
-    if config.iscolab:
-        for dirpath, dirnames, filenames in os.walk("./logs/"):
-            for filename in filenames:
-                if filename.endswith(".index"):
-                    indexes_list.append(os.path.join(dirpath,filename))
+    for dirpath, dirnames, filenames in os.walk("./logs/"):
+        for filename in filenames:
+            if filename.endswith(".index"):
+                indexes_list.append(os.path.join(dirpath,filename))
+    if len(indexes_list) > 0:
         return indexes_list
     else:
         return ''
