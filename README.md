@@ -10,8 +10,11 @@ cd EasyGUU-RVC-Fork
 Now download the hubert base model into that folder too.
 
 # Running it
-On windows you can just open the go-web.bat file.
-Or:
+On windows you can just open the go-web.bat file or navigate to the EasyGUI folder and manually type:
+```bash
+python.exe EasierGUI.py --pycmd python.exe --port 7897
+```
+On linux do:
 ```bash
 !python3 EasierGUI.py --pycmd python3
 ```
