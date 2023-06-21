@@ -1713,7 +1713,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                                     tts_button = gr.Button(value="Speak")
                                     tts_button.click(fn=elevenTTS, inputs=[api_box,tfs, elevenid], outputs=[record_button, input_audio0])
                     with gr.Row():
-                        with gr.Accordion('Animation', open=False):
+                        with gr.Accordion('Wav2Lip', open=False):
                             with gr.Row():
                                 face = gr.Image(type='filepath')
                                 animation = gr.Video(type='filepath')
