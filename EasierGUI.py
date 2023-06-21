@@ -1601,17 +1601,27 @@ def download_from_url(url, model):
     shutil.rmtree("unzips")
     return "Success."
 def success_message(face):
-    return f'{face.name} has been uploaded.' 
-def mouth(face, voice):
+    return f'{face.name} has been uploaded.', 'None'
+def mouth(size, face, voice, faces):
+    if size == 'Half':
+        size = 2
+    else:
+        size = 1
+    if faces == 'None':
+        character = face.name
+    else:
+        if faces == 'Ben Shapiro':
+            character = '/content/wav2lip-HD/inputs/ben-shapiro-10.mp4'
+        elif faces == 'Andrew Tate':
+            character = '/content/wav2lip-HD/inputs/tate-7.mp4'
     command = "python inference.py " \
             "--checkpoint_path checkpoints/wav2lip.pth " \
-            f"--face {face.name} " \
+            f"--face {character} " \
             f"--audio {voice} " \
             "--pads 0 20 0 0 " \
             "--outfile /content/wav2lip-HD/outputs/result.mp4 " \
             "--fps 24 " \
-            "--resize_factor 1 " \
-            "--wav2lip_batch_size 128"
+            f"--resize_factor {size}"
     process = subprocess.Popen(command, shell=True, cwd='/content/wav2lip-HD/Wav2Lip-master')
     stdout, stderr = process.communicate()
     return '/content/wav2lip-HD/outputs/result.mp4', 'Animation completed.'
@@ -1716,10 +1726,12 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                     with gr.Row():
                         with gr.Accordion('Wav2Lip', open=False):
                             with gr.Row():
-                                face = gr.UploadButton(type='file')
+                                size = gr.Radio(label='Resolution:',choices=['Half','Full'])
+                                face = gr.UploadButton("Upload A Character",type='file')
+                                faces = gr.Dropdown(label="OR Choose one:", choices=['None','Ben Shapiro','Andrew Tate'])
                             with gr.Row():
                                 preview = gr.Textbox(label="Status:",interactive=False)
-                                face.upload(fn=success_message,inputs=[face], outputs=[preview])
+                                face.upload(fn=success_message,inputs=[face], outputs=[preview, faces])
                             with gr.Row():
                                 animation = gr.Video(type='filepath')
                                 refresh_button2.click(fn=change_choices2, inputs=[], outputs=[input_audio0, animation])
@@ -1751,7 +1763,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                             interactive=True,
                             )
                     vc_output2 = gr.Audio(label="Output Audio (Click on the Three Dots in the Right Corner to Download)",type='filepath')
-                    animate_button.click(fn=mouth, inputs=[face, vc_output2], outputs=[animation, preview])
+                    animate_button.click(fn=mouth, inputs=[size, face, vc_output2, faces], outputs=[animation, preview])
                     f0method0 = gr.Radio(
                             label="Optional: Change the Pitch Extraction Algorithm. Use PM for fast results or Harvest for better low range (slower results) or Crepe for the best of both worlds.",
                             choices=["pm", "harvest", "dio", "crepe", "crepe-tiny", "mangio-crepe", "mangio-crepe-tiny"], # Fork Feature. Add Crepe-Tiny
