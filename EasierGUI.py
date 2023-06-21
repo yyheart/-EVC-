@@ -1490,7 +1490,7 @@ def change_choices2():
     for filename in os.listdir("./audios"):
         if filename.endswith(('.wav','.mp3')):
             audio_files.append(os.path.join('./audios',filename))
-    return {"choices": sorted(audio_files), "__type__": "update"}
+    return {"choices": sorted(audio_files), "__type__": "update"}, {"__type__": "update"}
     
 audio_files=[]
 for filename in os.listdir("./audios"):
@@ -1601,6 +1601,20 @@ def download_from_url(url, model):
     shutil.rmtree("unzips")
     return "Success."
 
+def mouth(face, voice):
+    command = "python inference.py " \
+            "--checkpoint_path checkpoints/wav2lip.pth " \
+            f"--face {face} " \
+            f"--audio {voice} " \
+            "--pads 0 20 0 0 " \
+            "--outfile /content/wav2lip-HD/outputs/result.mp4 " \
+            "--fps 12 " \
+            "--resize_factor 2 " \
+            "--wav2lip_batch_size 128"
+    process = subprocess.Popen(command, shell=True, cwd='/content/wav2lip-HD/Wav2Lip-master')
+    stdout, stderr = process.communicate()
+    return '/content/wav2lip-HD/outputs/result.mp4'
+
 def elevenTTS(xiapi, text, id):
     if xiapi!= '':
         CHUNK_SIZE = 1024
@@ -1683,7 +1697,6 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                         dropbox.upload(fn=save_to_wav2, inputs=[dropbox], outputs=[input_audio0])
                         dropbox.upload(fn=change_choices2, inputs=[], outputs=[input_audio0])
                         refresh_button2 = gr.Button("Refresh", variant="primary", size='sm')
-                        refresh_button2.click(fn=change_choices2, inputs=[], outputs=[input_audio0])
                         record_button.change(fn=save_to_wav, inputs=[record_button], outputs=[input_audio0])
                         record_button.change(fn=change_choices2, inputs=[], outputs=[input_audio0])
                     with gr.Row():
@@ -1699,6 +1712,15 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                                 with gr.Column():
                                     tts_button = gr.Button(value="Speak")
                                     tts_button.click(fn=elevenTTS, inputs=[api_box,tfs, elevenid], outputs=[record_button, input_audio0])
+                    with gr.Row():
+                        with gr.Accordion('Animation', open=False):
+                            with gr.Row():
+                                face = gr.Image(type='filepath')
+                                animation = gr.Video(type='filepath')
+                                refresh_button2.click(fn=change_choices2, inputs=[], outputs=[input_audio0, animation])
+                            with gr.Row():
+                                animate_button = gr.Button('Animate')
+
                 with gr.Column():
                     with gr.Accordion("Index Settings", open=True):
                         file_index1 = gr.Dropdown(
@@ -1723,7 +1745,8 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                             value=0.66,
                             interactive=True,
                             )
-                    vc_output2 = gr.Audio(label="Output Audio (Click on the Three Dots in the Right Corner to Download)")
+                    vc_output2 = gr.Audio(label="Output Audio (Click on the Three Dots in the Right Corner to Download)",type='filepath')
+                    animate_button.click(fn=mouth, inputs=[face, vc_output2], outputs=[animation])
                     f0method0 = gr.Radio(
                             label="Optional: Change the Pitch Extraction Algorithm. Use PM for fast results or Harvest for better low range (slower results) or Crepe for the best of both worlds.",
                             choices=["pm", "harvest", "dio", "crepe", "crepe-tiny", "mangio-crepe", "mangio-crepe-tiny"], # Fork Feature. Add Crepe-Tiny
