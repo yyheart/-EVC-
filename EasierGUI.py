@@ -1600,20 +1600,21 @@ def download_from_url(url, model):
     shutil.rmtree("zips")
     shutil.rmtree("unzips")
     return "Success."
-
+def success_message(face):
+    return f'{face.name} has been uploaded.' 
 def mouth(face, voice):
     command = "python inference.py " \
             "--checkpoint_path checkpoints/wav2lip.pth " \
-            f"--face {face} " \
+            f"--face {face.name} " \
             f"--audio {voice} " \
             "--pads 0 20 0 0 " \
             "--outfile /content/wav2lip-HD/outputs/result.mp4 " \
-            "--fps 12 " \
-            "--resize_factor 2 " \
+            "--fps 24 " \
+            "--resize_factor 1 " \
             "--wav2lip_batch_size 128"
     process = subprocess.Popen(command, shell=True, cwd='/content/wav2lip-HD/Wav2Lip-master')
     stdout, stderr = process.communicate()
-    return '/content/wav2lip-HD/outputs/result.mp4'
+    return '/content/wav2lip-HD/outputs/result.mp4', 'Animation completed.'
 
 def elevenTTS(xiapi, text, id):
     if xiapi!= '':
@@ -1715,7 +1716,11 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                     with gr.Row():
                         with gr.Accordion('Wav2Lip', open=False):
                             with gr.Row():
-                                face = gr.Image(type='filepath')
+                                face = gr.UploadButton(type='file')
+                            with gr.Row():
+                                preview = gr.Textbox(label="Status:",interactive=False)
+                                face.upload(fn=success_message,inputs=[face], outputs=[preview])
+                            with gr.Row():
                                 animation = gr.Video(type='filepath')
                                 refresh_button2.click(fn=change_choices2, inputs=[], outputs=[input_audio0, animation])
                             with gr.Row():
@@ -1746,7 +1751,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                             interactive=True,
                             )
                     vc_output2 = gr.Audio(label="Output Audio (Click on the Three Dots in the Right Corner to Download)",type='filepath')
-                    animate_button.click(fn=mouth, inputs=[face, vc_output2], outputs=[animation])
+                    animate_button.click(fn=mouth, inputs=[face, vc_output2], outputs=[animation, preview])
                     f0method0 = gr.Radio(
                             label="Optional: Change the Pitch Extraction Algorithm. Use PM for fast results or Harvest for better low range (slower results) or Crepe for the best of both worlds.",
                             choices=["pm", "harvest", "dio", "crepe", "crepe-tiny", "mangio-crepe", "mangio-crepe-tiny"], # Fork Feature. Add Crepe-Tiny
