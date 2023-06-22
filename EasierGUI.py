@@ -1,4 +1,4 @@
-import subprocess, torch, os, traceback, sys, warnings, shutil, numpy as np
+import zipfile, glob, subprocess, torch, os, traceback, sys, warnings, shutil, numpy as np
 from mega import Mega
 os.environ["no_proxy"] = "localhost, 127.0.0.1, ::1"
 import threading
@@ -1671,18 +1671,10 @@ def upload_to_dataset(files, dir):
     return f' {count} files uploaded.'     
     
 def zip_downloader(model):
-    file_path = f'./weights/{model}.pth'
-    file_name = os.path.splitext(os.path.basename(file_path))[0]
-    zip_directory = '/content/'
-    zip_path = os.path.join(zip_directory, file_name + '.zip')
-    logs_directory = './logs/'
-    log_file = None
-    for root, dirs, files in os.walk(logs_directory):
-        for file in files:
-            if file.endswith('.index') and 'added' in file:
-                log_file = os.path.join(root, file)
-    shutil.make_archive(os.path.splitext(zip_path)[0], 'zip', '.', file_path, log_file)
-    return zip_path
+    for file in os.listdir(f'./logs/{model}'):
+        if file.endswith('.index') and 'added' in file:
+            log_file = file
+    return [f'./weights/{model}.pth', f'./logs/{model}/{log_file}']
 
 with gr.Blocks(theme=gr.themes.Base()) as app:
     with gr.Tabs():
@@ -2134,7 +2126,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                                     interactive=True,
                                 )
                         zip_model = gr.Button('5.Download Model')
-                        zipped_model = gr.File(label='Your model.zip will appear here.')
+                        zipped_model = gr.Files(label='Your Model and Index file can be downloaded here:')
                         zip_model.click(fn=zip_downloader, inputs=[exp_dir1], outputs=[zipped_model])
             with gr.Group():
                 with gr.Accordion("Base Model Locations:", open=False, visible=False):
