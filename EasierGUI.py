@@ -1657,7 +1657,19 @@ def elevenTTS(xiapi, text, id):
         tts.save('./temp_gTTS.mp3')
         aud_path = save_to_wav('./temp_gTTS.mp3')
         return aud_path, aud_path
-        
+
+def upload_to_dataset(files, dir):
+    if dir == '':
+        dir = '/content/dataset'
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    count = 0
+    for file in files:
+        path=file.name
+        shutil.copy2(path,dir)
+        count += 1
+    return f' {count} files uploaded.'     
+    
 with gr.Blocks(theme=gr.themes.Base()) as app:
     with gr.Tabs():
         with gr.TabItem("Inference"):
@@ -1719,7 +1731,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                                   elevenid=gr.Textbox(label="Voice ID (Get it from https://api.elevenlabs.io/v1/voices)", value='pNInz6obpgDQGcFmaJgB')
                             with gr.Row():
                                 with gr.Column():
-                                    tfs = gr.Textbox(label="Input your Text", interactive=True, value="no")
+                                    tfs = gr.Textbox(label="Input your Text", interactive=True, value="This is a test.")
                                 with gr.Column():
                                     tts_button = gr.Button(value="Speak")
                                     tts_button.click(fn=elevenTTS, inputs=[api_box,tfs, elevenid], outputs=[record_button, input_audio0])
@@ -1765,12 +1777,12 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                     vc_output2 = gr.Audio(label="Output Audio (Click on the Three Dots in the Right Corner to Download)",type='filepath')
                     animate_button.click(fn=mouth, inputs=[size, face, vc_output2, faces], outputs=[animation, preview])
                     f0method0 = gr.Radio(
-                            label="Optional: Change the Pitch Extraction Algorithm. Use PM for fast results or Harvest for better low range (slower results) or Crepe for the best of both worlds.",
-                            choices=["pm", "harvest", "dio", "crepe", "crepe-tiny", "mangio-crepe", "mangio-crepe-tiny"], # Fork Feature. Add Crepe-Tiny
-                            value="pm",
+                            label="Optional: Change the Pitch Extraction Algorithm. They are ordered from fastest to slowest (least accurate to most accurate)",
+                            choices=["pm", "dio", "mangio-crepe-tiny", "crepe-tiny", "mangio-crepe", "crepe", "harvest"], # Fork Feature. Add Crepe-Tiny
+                            value="mangio-crepe",
                             interactive=True,
                         )
-                    with gr.Accordion("More", open=False):
+                    with gr.Accordion("Crepe-Settings & Others", open=False):
                         crepe_hop_length = gr.Slider(
                             minimum=1,
                             maximum=512,
@@ -1970,44 +1982,50 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                 https://paypal.me/lesantillan
                 """
                 )
-                '''
+                
         with gr.TabItem("Train", visible=False):
             with gr.Row():
-                exp_dir1 = gr.Textbox(label="Voice Name:", value="My-Voice")
-                sr2 = gr.Radio(
-                    label=i18n("目标采样率"),
-                    choices=["40k", "48k"],
-                    value="40k",
-                    interactive=True,
-                    visible=False
-                )
-                if_f0_3 = gr.Radio(
-                    label=i18n("模型是否带音高指导(唱歌一定要, 语音可以不要)"),
-                    choices=[True, False],
-                    value=True,
-                    interactive=True,
-                    visible=False
-                )
-                version19 = gr.Radio(
-                    label=i18n("版本(目前仅40k支持了v2)"),
-                    choices=["v1", "v2"],
-                    value="v2",
-                    interactive=True,
-                    visible=False,
-                )
-                np7 = gr.Slider(
-                    minimum=0,
-                    maximum=config.n_cpu,
-                    step=1,
-                    label=i18n("提取音高和处理数据使用的CPU进程数"),
-                    value=config.n_cpu,
-                    interactive=True,
-                )
-            with gr.Group():  # 暂时单人的, 后面支持最多4人的#数据处理
-                with gr.Row():
-                    trainset_dir4 = gr.Textbox(
-                        label=i18n("输入训练文件夹路径"), value="/content/dataset"
+                with gr.Column():
+                    exp_dir1 = gr.Textbox(label="Voice Name:", value="My-Voice")
+                    sr2 = gr.Radio(
+                        label=i18n("目标采样率"),
+                        choices=["40k", "48k"],
+                        value="40k",
+                        interactive=True,
+                        visible=False
                     )
+                    if_f0_3 = gr.Radio(
+                        label=i18n("模型是否带音高指导(唱歌一定要, 语音可以不要)"),
+                        choices=[True, False],
+                        value=True,
+                        interactive=True,
+                        visible=False
+                    )
+                    version19 = gr.Radio(
+                        label="RVC version",
+                        choices=["v1", "v2"],
+                        value="v2",
+                        interactive=True,
+                        visible=True,
+                    )
+                    np7 = gr.Slider(
+                        minimum=0,
+                        maximum=config.n_cpu,
+                        step=1,
+                        label="# of CPUs to use (Leave it unless you know what you're doing!)",
+                        value=config.n_cpu,
+                        interactive=True,
+                        visible=False
+                    )
+                    trainset_dir4 = gr.Textbox(label="Path to your dataset (audios, not zip):", value="/content/dataset")
+                    easy_uploader = gr.Files(label='OR Drop your audios here. They will be uploaded in your dataset path above.',file_types=['audio'])
+                    but1 = gr.Button("1.Process The Dataset", variant="primary")
+                    info1 = gr.Textbox(label="Status (wait until it says 'end preprocess'):", value="")
+                    easy_uploader.upload(fn=upload_to_dataset, inputs=[easy_uploader, trainset_dir4], outputs=[info1])
+                    but1.click(
+                        preprocess_dataset, [trainset_dir4, exp_dir1, sr2, np7], [info1]
+                    )
+                with gr.Column():
                     spk_id5 = gr.Slider(
                         minimum=0,
                         maximum=4,
@@ -2017,173 +2035,167 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                         interactive=True,
                         visible=False
                     )
-                    but1 = gr.Button(i18n("处理数据"), variant="primary")
-                    info1 = gr.Textbox(label=i18n("输出信息"), value="")
-                    but1.click(
-                        preprocess_dataset, [trainset_dir4, exp_dir1, sr2, np7], [info1]
-                    )
-            with gr.Group():
-                #gr.Markdown(value=i18n("step2b: 使用CPU提取音高(如果模型带音高), 使用GPU提取特征(选择卡号)"))
-                with gr.Row():
-                    with gr.Accordion('GPU Settings', open=False):
+                    with gr.Accordion('GPU Settings', open=False, visible=False):
                         gpus6 = gr.Textbox(
                             label=i18n("以-分隔输入使用的卡号, 例如   0-1-2   使用卡0和卡1和卡2"),
                             value=gpus,
                             interactive=True,
+                            visible=False
                         )
                         gpu_info9 = gr.Textbox(label=i18n("显卡信息"), value=gpu_info)
-                    with gr.Column():
-                        f0method8 = gr.Radio(
-                            label=i18n(
-                                "选择音高提取算法:输入歌声可用pm提速,高质量语音但CPU差可用dio提速,harvest质量更好但慢"
-                            ),
-                            choices=["pm", "harvest", "dio", "crepe", "mangio-crepe"], # Fork feature: Crepe on f0 extraction for training.
-                            value="harvest",
-                            interactive=True,
-                        )
-                        extraction_crepe_hop_length = gr.Slider(
-                            minimum=1,
-                            maximum=512,
-                            step=1,
-                            label=i18n("crepe_hop_length"),
-                            value=128,
-                            interactive=True
-                        )
-                    but2 = gr.Button(i18n("特征提取"), variant="primary")
-                    info2 = gr.Textbox(label=i18n("输出信息"), value="", max_lines=8)
-                    but2.click(
-                        extract_f0_feature,
-                        [gpus6, np7, f0method8, if_f0_3, exp_dir1, version19, extraction_crepe_hop_length],
-                        [info2],
-                    )
-            with gr.Group():
-                #gr.Markdown(value=i18n("step3: 填写训练设置, 开始训练模型和索引"))
-                with gr.Row():
-                    save_epoch10 = gr.Slider(
-                        minimum=0,
-                        maximum=50,
-                        step=1,
-                        label="Create a backup every # of epochs:",
-                        value=10,
-                        interactive=True,
-                    )
-                    total_epoch11 = gr.Slider(
-                        minimum=0,
-                        maximum=10000,
-                        step=1,
-                        label=i18n("总训练轮数total_epoch"),
-                        value=100,
-                        interactive=True,
-                    )
-                    batch_size12 = gr.Slider(
-                        minimum=1,
-                        maximum=40,
-                        step=1,
-                        label=i18n("每张显卡的batch_size"),
-                        value=default_batch_size,
-                        interactive=True,
-                    )
-                    if_save_latest13 = gr.Radio(
-                        label=i18n("是否仅保存最新的ckpt文件以节省硬盘空间"),
-                        choices=[i18n("是"), i18n("否")],
-                        value=i18n("是"),
-                        interactive=True,
-                    )
-                    if_cache_gpu17 = gr.Radio(
+                    f0method8 = gr.Radio(
                         label=i18n(
-                            "是否缓存所有训练集至显存. 10min以下小数据可缓存以加速训练, 大数据缓存会炸显存也加不了多少速"
+                            "选择音高提取算法:输入歌声可用pm提速,高质量语音但CPU差可用dio提速,harvest质量更好但慢"
                         ),
-                        choices=[i18n("是"), i18n("否")],
-                        value=i18n("否"),
+                        choices=["harvest","crepe", "mangio-crepe"], # Fork feature: Crepe on f0 extraction for training.
+                        value="mangio-crepe",
                         interactive=True,
                     )
-                    if_save_every_weights18 = gr.Radio(
-                        label=i18n("是否在每次保存时间点将最终小模型保存至weights文件夹"),
-                        choices=[i18n("是"), i18n("否")],
-                        value=i18n("否"),
+                    extraction_crepe_hop_length = gr.Slider(
+                        minimum=1,
+                        maximum=512,
+                        step=1,
+                        label=i18n("crepe_hop_length"),
+                        value=128,
+                        interactive=True
+                    )
+                    but2 = gr.Button("2.Pitch Extraction", variant="primary")
+                    info2 = gr.Textbox(label="Status (wait until it says 'all-feature-done'):", value="", max_lines=8)
+                    but2.click(
+                            extract_f0_feature,
+                            [gpus6, np7, f0method8, if_f0_3, exp_dir1, version19, extraction_crepe_hop_length],
+                            [info2],
+                        )
+                with gr.Row():      
+                    with gr.Column():
+                        total_epoch11 = gr.Slider(
+                            minimum=0,
+                            maximum=10000,
+                            step=10,
+                            label="Total # of training epochs (IF you choose a value too high, your model will sound horribly overtrained.):",
+                            value=250,
+                            interactive=True,
+                        )
+                        but3 = gr.Button("3.Train Model", variant="primary")
+                        but4 = gr.Button("4.Train Index", variant="primary")
+                        info3 = gr.Textbox(label="Status:(Wait until it says success for the model, or it creates the index)", value="", max_lines=10)
+                        with gr.Accordion("Training Preferences (You can leave these as they are)", open=False):
+                            #gr.Markdown(value=i18n("step3: 填写训练设置, 开始训练模型和索引"))
+                            with gr.Column():
+                                save_epoch10 = gr.Slider(
+                                    minimum=0,
+                                    maximum=50,
+                                    step=1,
+                                    label="Backup every # of epochs:",
+                                    value=10,
+                                    interactive=True,
+                                )
+                                batch_size12 = gr.Slider(
+                                    minimum=1,
+                                    maximum=40,
+                                    step=1,
+                                    label="Batch Size (LEAVE IT unless you know what you're doing!):",
+                                    value=default_batch_size,
+                                    interactive=True,
+                                )
+                                if_save_latest13 = gr.Radio(
+                                    label=i18n("是否仅保存最新的ckpt文件以节省硬盘空间"),
+                                    choices=[i18n("是"), i18n("否")],
+                                    value=i18n("是"),
+                                    interactive=True,
+                                )
+                                if_cache_gpu17 = gr.Radio(
+                                    label=i18n(
+                                        "是否缓存所有训练集至显存. 10min以下小数据可缓存以加速训练, 大数据缓存会炸显存也加不了多少速"
+                                    ),
+                                    choices=[i18n("是"), i18n("否")],
+                                    value=i18n("否"),
+                                    interactive=True,
+                                )
+                                if_save_every_weights18 = gr.Radio(
+                                    label=i18n("是否在每次保存时间点将最终小模型保存至weights文件夹"),
+                                    choices=[i18n("是"), i18n("否")],
+                                    value=i18n("否"),
+                                    interactive=True,
+                                )
+            with gr.Group():
+                with gr.Accordion("Base Model Locations:", open=False, visible=False):
+                    pretrained_G14 = gr.Textbox(
+                        label=i18n("加载预训练底模G路径"),
+                        value="pretrained/f0G40k.pth",
                         interactive=True,
                     )
-                with gr.Row():
-                    with gr.Accordion("Advanced", open=False):
-                        pretrained_G14 = gr.Textbox(
-                            label=i18n("加载预训练底模G路径"),
-                            value="pretrained/f0G40k.pth",
-                            interactive=True,
-                        )
-                        pretrained_D15 = gr.Textbox(
-                            label=i18n("加载预训练底模D路径"),
-                            value="pretrained/f0D40k.pth",
-                            interactive=True,
-                        )
-                    sr2.change(
-                        change_sr2,
-                        [sr2, if_f0_3, version19],
-                        [pretrained_G14, pretrained_D15, version19],
-                    )
-                    version19.change(
-                        change_version19,
-                        [sr2, if_f0_3, version19],
-                        [pretrained_G14, pretrained_D15],
-                    )
-                    if_f0_3.change(
-                        change_f0,
-                        [if_f0_3, sr2, version19],
-                        [f0method8, pretrained_G14, pretrained_D15],
+                    pretrained_D15 = gr.Textbox(
+                        label=i18n("加载预训练底模D路径"),
+                        value="pretrained/f0D40k.pth",
+                        interactive=True,
                     )
                     gpus16 = gr.Textbox(
                         label=i18n("以-分隔输入使用的卡号, 例如   0-1-2   使用卡0和卡1和卡2"),
                         value=gpus,
                         interactive=True,
                     )
-                    but3 = gr.Button(i18n("训练模型"), variant="primary")
-                    but4 = gr.Button(i18n("训练特征索引"), variant="primary")
-                    but5 = gr.Button(i18n("一键训练"), variant="primary", visible=False)
-                    info3 = gr.Textbox(label=i18n("输出信息"), value="", max_lines=10)
-                    but3.click(
-                        click_train,
-                        [
-                            exp_dir1,
-                            sr2,
-                            if_f0_3,
-                            spk_id5,
-                            save_epoch10,
-                            total_epoch11,
-                            batch_size12,
-                            if_save_latest13,
-                            pretrained_G14,
-                            pretrained_D15,
-                            gpus16,
-                            if_cache_gpu17,
-                            if_save_every_weights18,
-                            version19,
-                        ],
-                        info3,
-                    )
-                    but4.click(train_index, [exp_dir1, version19], info3)
-                    but5.click(
-                        train1key,
-                        [
-                            exp_dir1,
-                            sr2,
-                            if_f0_3,
-                            trainset_dir4,
-                            spk_id5,
-                            np7,
-                            f0method8,
-                            save_epoch10,
-                            total_epoch11,
-                            batch_size12,
-                            if_save_latest13,
-                            pretrained_G14,
-                            pretrained_D15,
-                            gpus16,
-                            if_cache_gpu17,
-                            if_save_every_weights18,
-                            version19,
-                            extraction_crepe_hop_length
-                        ],
-                        info3,
-                    )
+                sr2.change(
+                    change_sr2,
+                    [sr2, if_f0_3, version19],
+                    [pretrained_G14, pretrained_D15, version19],
+                )
+                version19.change(
+                    change_version19,
+                    [sr2, if_f0_3, version19],
+                    [pretrained_G14, pretrained_D15],
+                )
+                if_f0_3.change(
+                    change_f0,
+                    [if_f0_3, sr2, version19],
+                    [f0method8, pretrained_G14, pretrained_D15],
+                )
+                but5 = gr.Button(i18n("一键训练"), variant="primary", visible=False)
+                but3.click(
+                    click_train,
+                    [
+                        exp_dir1,
+                        sr2,
+                        if_f0_3,
+                        spk_id5,
+                        save_epoch10,
+                        total_epoch11,
+                        batch_size12,
+                        if_save_latest13,
+                        pretrained_G14,
+                        pretrained_D15,
+                        gpus16,
+                        if_cache_gpu17,
+                        if_save_every_weights18,
+                        version19,
+                    ],
+                    info3,
+                )
+                but4.click(train_index, [exp_dir1, version19], info3)
+                but5.click(
+                    train1key,
+                    [
+                        exp_dir1,
+                        sr2,
+                        if_f0_3,
+                        trainset_dir4,
+                        spk_id5,
+                        np7,
+                        f0method8,
+                        save_epoch10,
+                        total_epoch11,
+                        batch_size12,
+                        if_save_latest13,
+                        pretrained_G14,
+                        pretrained_D15,
+                        gpus16,
+                        if_cache_gpu17,
+                        if_save_every_weights18,
+                        version19,
+                        extraction_crepe_hop_length
+                    ],
+                    info3,
+                )
 
 
             try:
@@ -2196,25 +2208,10 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                 gr.Markdown(value=info)
             except:
                 gr.Markdown(traceback.format_exc())
-'''
+
 
     #region Mangio Preset Handler Region
-    def save_preset(
-        preset_name,
-        sid0,
-        vc_transform,
-        input_audio,
-        f0method,
-        crepe_hop_length,
-        filter_radius,
-        file_index1,
-        file_index2,
-        index_rate,
-        resample_sr,
-        rms_mix_rate,
-        protect,
-        f0_file
-    ):
+    def save_preset(preset_name,sid0,vc_transform,input_audio,f0method,crepe_hop_length,filter_radius,file_index1,file_index2,index_rate,resample_sr,rms_mix_rate,protect,f0_file):
         data = None
         with open('../inference-presets.json', 'r') as file:
             data = json.load(file)
