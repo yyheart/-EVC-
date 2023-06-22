@@ -1670,6 +1670,20 @@ def upload_to_dataset(files, dir):
         count += 1
     return f' {count} files uploaded.'     
     
+def zip_downloader(model):
+    file_path = f'./weights/{model}.pth'
+    file_name = os.path.splitext(os.path.basename(file_path))[0]
+    zip_directory = '/content/'
+    zip_path = os.path.join(zip_directory, file_name + '.zip')
+    logs_directory = './logs/'
+    log_file = None
+    for root, dirs, files in os.walk(logs_directory):
+        for file in files:
+            if file.endswith('.index') and 'added' in file:
+                log_file = os.path.join(root, file)
+    shutil.make_archive(os.path.splitext(zip_path)[0], 'zip', '.', file_path, log_file)
+    return zip_path
+
 with gr.Blocks(theme=gr.themes.Base()) as app:
     with gr.Tabs():
         with gr.TabItem("Inference"):
@@ -1964,6 +1978,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                         ],
                         [vc_output3],
                     )
+                    but1.click(fn=lambda: easy_uploader.clear())
         with gr.TabItem("Download Model"):
             with gr.Row():
                 url=gr.Textbox(label="Enter the URL to the Model:")
@@ -2006,7 +2021,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                         choices=["v1", "v2"],
                         value="v2",
                         interactive=True,
-                        visible=True,
+                        visible=False,
                     )
                     np7 = gr.Slider(
                         minimum=0,
@@ -2060,7 +2075,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                         interactive=True
                     )
                     but2 = gr.Button("2.Pitch Extraction", variant="primary")
-                    info2 = gr.Textbox(label="Status (wait until it says 'all-feature-done'):", value="", max_lines=8)
+                    info2 = gr.Textbox(label="Status(Check the Colab Notebook's cell output):", value="", max_lines=8)
                     but2.click(
                             extract_f0_feature,
                             [gpus6, np7, f0method8, if_f0_3, exp_dir1, version19, extraction_crepe_hop_length],
@@ -2078,7 +2093,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                         )
                         but3 = gr.Button("3.Train Model", variant="primary")
                         but4 = gr.Button("4.Train Index", variant="primary")
-                        info3 = gr.Textbox(label="Status:(Wait until it says success for the model, or it creates the index)", value="", max_lines=10)
+                        info3 = gr.Textbox(label="Status(Check the Colab Notebook's cell output):", value="", max_lines=10)
                         with gr.Accordion("Training Preferences (You can leave these as they are)", open=False):
                             #gr.Markdown(value=i18n("step3: 填写训练设置, 开始训练模型和索引"))
                             with gr.Column():
@@ -2118,6 +2133,9 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                                     value=i18n("否"),
                                     interactive=True,
                                 )
+                        zip_model = gr.Button('5.Download Model')
+                        zipped_model = gr.File(label='Your model.zip will appear here.')
+                        zip_model.click(fn=zip_downloader, inputs=[exp_dir1], outputs=[zipped_model])
             with gr.Group():
                 with gr.Accordion("Base Model Locations:", open=False, visible=False):
                     pretrained_G14 = gr.Textbox(
@@ -2207,7 +2225,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                         info = f.read()
                 gr.Markdown(value=info)
             except:
-                gr.Markdown(traceback.format_exc())
+                gr.Markdown("")
 
 
     #region Mangio Preset Handler Region
