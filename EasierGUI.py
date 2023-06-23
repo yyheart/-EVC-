@@ -1561,6 +1561,8 @@ def check_for_name():
 def download_from_url(url, model):
     if url == '':
         return "URL cannot be left empty."
+    if model =='':
+        return "You need to name your model. For example: My-Model"
     url = url.strip()
     zip_dirs = ["zips", "unzips"]
     for directory in zip_dirs:
