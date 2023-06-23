@@ -1786,13 +1786,13 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                             )
                     vc_output2 = gr.Audio(label="Output Audio (Click on the Three Dots in the Right Corner to Download)",type='filepath')
                     animate_button.click(fn=mouth, inputs=[size, face, vc_output2, faces], outputs=[animation, preview])
-                    f0method0 = gr.Radio(
+                    with gr.Accordion("Advanced Settings", open=False):
+                        f0method0 = gr.Radio(
                             label="Optional: Change the Pitch Extraction Algorithm.",
                             choices=["pm", "dio", "mangio-crepe-tiny", "crepe-tiny", "crepe", "mangio-crepe", "harvest"], # Fork Feature. Add Crepe-Tiny
                             value="mangio-crepe",
                             interactive=True,
                         )
-                    with gr.Accordion("Advanced Settings", open=False):
                         crepe_hop_length = gr.Slider(
                             minimum=1,
                             maximum=512,
