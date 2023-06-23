@@ -22,10 +22,10 @@ warnings.filterwarnings("ignore")
 torch.manual_seed(114514)
 from i18n import I18nAuto
 import ffmpeg
-from MDXNet import MDXNetDereverb
+#from MDXNet import MDXNetDereverb
 
 i18n = I18nAuto()
-i18n.print()
+#i18n.print()
 # 判断是否有能用来训练和加速推理的N卡
 ngpu = torch.cuda.device_count()
 gpu_infos = []
@@ -1787,17 +1787,17 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                     vc_output2 = gr.Audio(label="Output Audio (Click on the Three Dots in the Right Corner to Download)",type='filepath')
                     animate_button.click(fn=mouth, inputs=[size, face, vc_output2, faces], outputs=[animation, preview])
                     f0method0 = gr.Radio(
-                            label="Optional: Change the Pitch Extraction Algorithm. They are ordered from fastest to slowest (least accurate to most accurate)",
-                            choices=["pm", "dio", "mangio-crepe-tiny", "crepe-tiny", "mangio-crepe", "crepe", "harvest"], # Fork Feature. Add Crepe-Tiny
+                            label="Optional: Change the Pitch Extraction Algorithm.",
+                            choices=["pm", "dio", "mangio-crepe-tiny", "crepe-tiny", "crepe", "mangio-crepe", "harvest"], # Fork Feature. Add Crepe-Tiny
                             value="mangio-crepe",
                             interactive=True,
                         )
-                    with gr.Accordion("Crepe-Settings & Others", open=False):
+                    with gr.Accordion("Advanced Settings", open=False):
                         crepe_hop_length = gr.Slider(
                             minimum=1,
                             maximum=512,
                             step=1,
-                            label="Crepe Hop Length. Higher numbers will reduce the chance of extreme pitch changes but lower numbers will increase accuracy.",
+                            label="Mangio-Crepe Hop Length. Higher numbers will reduce the chance of extreme pitch changes but lower numbers will increase accuracy.",
                             value=120,
                             interactive=True
                             )
