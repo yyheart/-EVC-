@@ -1671,7 +1671,7 @@ def elevenTTS(xiapi, text, id, lang):
 
 def upload_to_dataset(files, dir):
     if dir == '':
-        dir = '/content/dataset'
+        dir = './dataset'
     if not os.path.exists(dir):
         os.makedirs(dir)
     count = 0
@@ -1679,11 +1679,11 @@ def upload_to_dataset(files, dir):
         path=file.name
         shutil.copy2(path,dir)
         count += 1
-    return f' {count} files uploaded.'     
+    return f' {count} files uploaded to {dir}.'     
     
 def zip_downloader(model):
     if not os.path.exists(f'./weights/{model}.pth'):
-        return '', f'Could not find {model}.pth'
+        return {"__type__": "update"}, f'Make sure the Voice Name is correct. I could not find {model}.pth'
     index_found = False
     for file in os.listdir(f'./logs/{model}'):
         if file.endswith('.index') and 'added' in file:
@@ -1693,7 +1693,6 @@ def zip_downloader(model):
         return [f'./weights/{model}.pth', f'./logs/{model}/{log_file}'], "Done"
     else:
         return f'./weights/{model}.pth', "Could not find Index file."
-
 
 with gr.Blocks(theme=gr.themes.Base()) as app:
     with gr.Tabs():
@@ -1741,6 +1740,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                         input_audio0 = gr.Dropdown(
                             label="2.Choose your audio.",
                             value="./audios/someguy.mp3",
+                            choices=audio_files
                             )
                         dropbox.upload(fn=save_to_wav2, inputs=[dropbox], outputs=[input_audio0])
                         dropbox.upload(fn=change_choices2, inputs=[], outputs=[input_audio0])
@@ -1773,7 +1773,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                                 animate_button = gr.Button('Animate')
 
                 with gr.Column():
-                    with gr.Accordion("Index Settings", open=True):
+                    with gr.Accordion("Index Settings", open=False):
                         file_index1 = gr.Dropdown(
                             label="3. Path to your added.index file (if it didn't automatically find it.)",
                             choices=get_indexes(),
@@ -2040,7 +2040,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                         interactive=True,
                         visible=False
                     )
-                    trainset_dir4 = gr.Textbox(label="Path to your dataset (audios, not zip):", value="/content/dataset")
+                    trainset_dir4 = gr.Textbox(label="Path to your dataset (audios, not zip):", value="./dataset")
                     easy_uploader = gr.Files(label='OR Drop your audios here. They will be uploaded in your dataset path above.',file_types=['audio'])
                     but1 = gr.Button("1.Process The Dataset", variant="primary")
                     info1 = gr.Textbox(label="Status (wait until it says 'end preprocess'):", value="")
