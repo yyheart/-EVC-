@@ -93,19 +93,7 @@ config = Config()
 # from trainset_preprocess_pipeline import PreProcess
 logging.getLogger("numba").setLevel(logging.WARNING)
 
-
-class ToolButton(gr.Button, gr.components.FormComponent):
-    """Small button with single emoji as text, fits inside gradio forms"""
-
-    def __init__(self, **kwargs):
-        super().__init__(variant="tool", **kwargs)
-
-    def get_block_name(self):
-        return "button"
-
-
 hubert_model = None
-
 
 def load_hubert():
     global hubert_model
@@ -1992,7 +1980,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                 url=gr.Textbox(label="Enter the URL to the Model:")
             with gr.Row():
                 model = gr.Textbox(label="Name your model:")
-                download_button=gr.Button(label="Download")
+                download_button=gr.Button("Download")
             with gr.Row():
                 status_bar=gr.Textbox(label="")
                 download_button.click(fn=download_from_url, inputs=[url, model], outputs=[status_bar])
