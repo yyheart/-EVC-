@@ -1559,9 +1559,9 @@ def check_for_name():
         return ''
             
 def download_from_url(url, model):
-    url = url.strip()
     if url == '':
         return "URL cannot be left empty."
+    url = url.strip()
     zip_dirs = ["zips", "unzips"]
     for directory in zip_dirs:
         if os.path.exists(directory):
@@ -1570,36 +1570,33 @@ def download_from_url(url, model):
     os.makedirs("unzips", exist_ok=True)
     zipfile = model + '.zip'
     zipfile_path = './zips/' + zipfile
-    MODELEPOCH = ''
-    if "drive.google.com" in url:
-        subprocess.run(["gdown", url, "--fuzzy", "-O", zipfile_path])
-    elif "mega.nz" in url:
-        m = Mega()
-        m.download_url(url, './zips')
-    else:
-        subprocess.run(["wget", url, "-O", f"./zips/{zipfile}"])
-    for filename in os.listdir("./zips"):
-        if filename.endswith(".zip"):
-            zipfile_path = os.path.join("./zips/",filename)
-            shutil.unpack_archive(zipfile_path, "./unzips", 'zip')
+    try:
+        if "drive.google.com" in url:
+            subprocess.run(["gdown", url, "--fuzzy", "-O", zipfile_path])
+        elif "mega.nz" in url:
+            m = Mega()
+            m.download_url(url, './zips')
         else:
-            return "No zipfile found."
-    for root, dirs, files in os.walk('./unzips'):
-        for file in files:
-            if "G_" in file:
-                MODELEPOCH = file.split("G_")[1].split(".")[0]
-        if MODELEPOCH == '':
-            MODELEPOCH = '404'
-        for file in files:
-            file_path = os.path.join(root, file)
-            if file.endswith(".index"):
-                os.mkdir(f'./logs/{model}')
-                shutil.copy2(file_path,f'./logs/{model}')
-            elif "G_" not in file and "D_" not in file and file.endswith(".pth"):
-                shutil.copy(file_path,f'./weights/{model}.pth')
-    shutil.rmtree("zips")
-    shutil.rmtree("unzips")
-    return "Success."
+            subprocess.run(["wget", url, "-O", zipfile_path])
+        for filename in os.listdir("./zips"):
+            if filename.endswith(".zip"):
+                zipfile_path = os.path.join("./zips/",filename)
+                shutil.unpack_archive(zipfile_path, "./unzips", 'zip')
+            else:
+                return "No zipfile found."
+        for root, dirs, files in os.walk('./unzips'):
+            for file in files:
+                file_path = os.path.join(root, file)
+                if file.endswith(".index"):
+                    os.mkdir(f'./logs/{model}')
+                    shutil.copy2(file_path,f'./logs/{model}')
+                elif "G_" not in file and "D_" not in file and file.endswith(".pth"):
+                    shutil.copy(file_path,f'./weights/{model}.pth')
+        shutil.rmtree("zips")
+        shutil.rmtree("unzips")
+        return "Success."
+    except:
+        return "There's been an error."
 def success_message(face):
     return f'{face.name} has been uploaded.', 'None'
 def mouth(size, face, voice, faces):
