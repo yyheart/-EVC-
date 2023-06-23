@@ -1629,8 +1629,8 @@ eleven_voices = ['Adam','Antoni','Josh','Arnold','Sam','Bella','Rachel','Domi','
 eleven_voices_ids=['pNInz6obpgDQGcFmaJgB','ErXwobaYiN019PkySvjV','TxGEqnHWrfWFTfGW9XjX','VR6AewLTigWG4xSOukaG','yoZ06aMxZJJ28mfd3POQ','EXAVITQu4vr4xnSDxMaL','21m00Tcm4TlvDq8ikWAM','AZnzlk1XvdvUeBnXmlld','MF3mGyEYCl7XYWbV9V6O']
 chosen_voice = dict(zip(eleven_voices, eleven_voices_ids))
 def elevenTTS(xiapi, text, id, lang):
-    choice = chosen_voice[id]
-    if xiapi!= '':
+    if xiapi!= '' and id !='': 
+        choice = chosen_voice[id]
         CHUNK_SIZE = 1024
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{choice}"
         headers = {
@@ -1751,7 +1751,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                     with gr.Row():
                         with gr.Accordion('Text To Speech', open=False):
                             with gr.Column():
-                                lang = gr.Radio(label='',choices=['en','es','fr','pt','zh-CN'])
+                                lang = gr.Radio(label='Chinese & Japanese do not work with ElevenLabs currently.',choices=['en','es','fr','pt','zh-CN','de','hi','ja'])
                                 api_box = gr.Textbox(label="Enter your API Key for ElevenLabs, or leave empty to use GoogleTTS", value='')
                                 elevenid=gr.Dropdown(label="Voice:", choices=eleven_voices)
                             with gr.Column():
@@ -2139,7 +2139,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                                 if_save_every_weights18 = gr.Radio(
                                     label=i18n("是否在每次保存时间点将最终小模型保存至weights文件夹"),
                                     choices=[i18n("是"), i18n("否")],
-                                    value=i18n("否"),
+                                    value=i18n("是"),
                                     interactive=True,
                                 )
                         zip_model = gr.Button('5.Download Model')
