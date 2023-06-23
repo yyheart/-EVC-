@@ -2108,10 +2108,10 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                             with gr.Column():
                                 save_epoch10 = gr.Slider(
                                     minimum=0,
-                                    maximum=50,
-                                    step=1,
+                                    maximum=100,
+                                    step=5,
                                     label="Backup every # of epochs:",
-                                    value=10,
+                                    value=25,
                                     interactive=True,
                                 )
                                 batch_size12 = gr.Slider(
