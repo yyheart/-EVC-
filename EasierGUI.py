@@ -1625,25 +1625,37 @@ def mouth(size, face, voice, faces):
     process = subprocess.Popen(command, shell=True, cwd='/content/wav2lip-HD/Wav2Lip-master')
     stdout, stderr = process.communicate()
     return '/content/wav2lip-HD/outputs/result.mp4', 'Animation completed.'
-
-def elevenTTS(xiapi, text, id):
+eleven_voices = ['Adam','Antoni','Josh','Arnold','Sam','Bella','Rachel','Domi','Elli']
+eleven_voices_ids=['pNInz6obpgDQGcFmaJgB','ErXwobaYiN019PkySvjV','TxGEqnHWrfWFTfGW9XjX','VR6AewLTigWG4xSOukaG','yoZ06aMxZJJ28mfd3POQ','EXAVITQu4vr4xnSDxMaL','21m00Tcm4TlvDq8ikWAM','AZnzlk1XvdvUeBnXmlld','MF3mGyEYCl7XYWbV9V6O']
+chosen_voice = dict(zip(eleven_voices, eleven_voices_ids))
+def elevenTTS(xiapi, text, id, lang):
+    choice = chosen_voice[id]
     if xiapi!= '':
         CHUNK_SIZE = 1024
-        url = f"https://api.elevenlabs.io/v1/text-to-speech/{id}"
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{choice}"
         headers = {
         "Accept": "audio/mpeg",
         "Content-Type": "application/json",
         "xi-api-key": xiapi
         }
-
-        data = {
-        "text": text,
-        "model_id": "eleven_monolingual_v1",
-        "voice_settings": {
-          "stability": 0.5,
-          "similarity_boost": 0.5
-        }
-        }
+        if lang == 'en':
+            data = {
+            "text": text,
+            "model_id": "eleven_monolingual_v1",
+            "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.5
+            }
+            }
+        else:
+            data = {
+            "text": text,
+            "model_id": "eleven_multilingual_v1",
+            "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.5
+            }
+            }
 
         response = requests.post(url, json=data, headers=headers)
         with open('./temp_eleven.mp3', 'wb') as f:
@@ -1653,7 +1665,7 @@ def elevenTTS(xiapi, text, id):
         aud_path = save_to_wav('./temp_eleven.mp3')
         return aud_path, aud_path
     else:
-        tts = gTTS(text)
+        tts = gTTS(text, lang=lang)
         tts.save('./temp_gTTS.mp3')
         aud_path = save_to_wav('./temp_gTTS.mp3')
         return aud_path, aud_path
@@ -1671,10 +1683,18 @@ def upload_to_dataset(files, dir):
     return f' {count} files uploaded.'     
     
 def zip_downloader(model):
+    if not os.path.exists(f'./weights/{model}.pth'):
+        return '', f'Could not find {model}.pth'
+    index_found = False
     for file in os.listdir(f'./logs/{model}'):
         if file.endswith('.index') and 'added' in file:
             log_file = file
-    return [f'./weights/{model}.pth', f'./logs/{model}/{log_file}']
+            index_found = True
+    if index_found:
+        return [f'./weights/{model}.pth', f'./logs/{model}/{log_file}'], "Done"
+    else:
+        return f'./weights/{model}.pth', "Could not find Index file."
+
 
 with gr.Blocks(theme=gr.themes.Base()) as app:
     with gr.Tabs():
@@ -1730,17 +1750,14 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                         record_button.change(fn=change_choices2, inputs=[], outputs=[input_audio0])
                     with gr.Row():
                         with gr.Accordion('Text To Speech', open=False):
-                            with gr.Row():
-                              with gr.Column():
-                                  api_box = gr.Textbox(label="Enter your API Key for ElevenLabs, or leave empty to use GoogleTTS", value='')
-                              with gr.Column():
-                                  elevenid=gr.Textbox(label="Voice ID (Get it from https://api.elevenlabs.io/v1/voices)", value='pNInz6obpgDQGcFmaJgB')
-                            with gr.Row():
-                                with gr.Column():
-                                    tfs = gr.Textbox(label="Input your Text", interactive=True, value="This is a test.")
-                                with gr.Column():
-                                    tts_button = gr.Button(value="Speak")
-                                    tts_button.click(fn=elevenTTS, inputs=[api_box,tfs, elevenid], outputs=[record_button, input_audio0])
+                            with gr.Column():
+                                lang = gr.Radio(label='',choices=['en','es','fr','pt','zh-CN'])
+                                api_box = gr.Textbox(label="Enter your API Key for ElevenLabs, or leave empty to use GoogleTTS", value='')
+                                elevenid=gr.Dropdown(label="Voice:", choices=eleven_voices)
+                            with gr.Column():
+                                tfs = gr.Textbox(label="Input your Text", interactive=True, value="This is a test.")
+                                tts_button = gr.Button(value="Speak")
+                                tts_button.click(fn=elevenTTS, inputs=[api_box,tfs, elevenid, lang], outputs=[record_button, input_audio0])
                     with gr.Row():
                         with gr.Accordion('Wav2Lip', open=False):
                             with gr.Row():
@@ -2127,7 +2144,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                                 )
                         zip_model = gr.Button('5.Download Model')
                         zipped_model = gr.Files(label='Your Model and Index file can be downloaded here:')
-                        zip_model.click(fn=zip_downloader, inputs=[exp_dir1], outputs=[zipped_model])
+                        zip_model.click(fn=zip_downloader, inputs=[exp_dir1], outputs=[zipped_model, info3])
             with gr.Group():
                 with gr.Accordion("Base Model Locations:", open=False, visible=False):
                     pretrained_G14 = gr.Textbox(
