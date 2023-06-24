@@ -1483,7 +1483,7 @@ def change_choices2():
 audio_files=[]
 for filename in os.listdir("./audios"):
     if filename.endswith(('.wav','.mp3')):
-        audio_files.append(filename)
+        audio_files.append(os.path.join('./audios',filename))
         
 def get_index():
     if check_for_name() != '':
