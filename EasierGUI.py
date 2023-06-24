@@ -1738,7 +1738,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                     with gr.Row():
                         with gr.Accordion('Text To Speech', open=False):
                             with gr.Column():
-                                lang = gr.Radio(label='Chinese & Japanese do not work with ElevenLabs currently.',choices=['en','es','fr','pt','zh-CN','de','hi','ja'])
+                                lang = gr.Radio(label='Chinese & Japanese do not work with ElevenLabs currently.',choices=['en','es','fr','pt','zh-CN','de','hi','ja'], value='en')
                                 api_box = gr.Textbox(label="Enter your API Key for ElevenLabs, or leave empty to use GoogleTTS", value='')
                                 elevenid=gr.Dropdown(label="Voice:", choices=eleven_voices)
                             with gr.Column():
