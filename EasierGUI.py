@@ -2023,10 +2023,10 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                         minimum=0,
                         maximum=config.n_cpu,
                         step=1,
-                        label="# of CPUs to use (Leave it unless you know what you're doing!)",
+                        label="# of CPUs for data processing (Leave as it is)",
                         value=config.n_cpu,
                         interactive=True,
-                        visible=False
+                        visible=True
                     )
                     trainset_dir4 = gr.Textbox(label="Path to your dataset (audios, not zip):", value="./dataset")
                     easy_uploader = gr.Files(label='OR Drop your audios here. They will be uploaded in your dataset path above.',file_types=['audio'])
