@@ -3,8 +3,8 @@
 # Installation
 
 ```bash
-!git clone https://github.com/777gt/EasyGUI-RVC-Fork
-!cd EasyGUI-RVC-Fork
+!git clone https://github.com/777gt/-EVC-
+!cd -EVC-
 !pip install -r requirements.txt
 ```
 Now download the hubert base model into that folder too.
@@ -12,11 +12,11 @@ Now download the hubert base model into that folder too.
 # Running it
 On windows you can just open the go-web.bat file or navigate to the EasyGUI folder and manually type:
 ```bash
-!python.exe EasierGUI.py --pycmd python.exe --port 7897
+!python.exe GUI.py --pycmd python.exe --port 7897
 ```
 On linux do:
 ```bash
-!python3 EasierGUI.py --pycmd python3
+!python3 GUI.py --pycmd python3
 ```
 
 Latest updates:
