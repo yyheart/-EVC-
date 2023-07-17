@@ -1789,7 +1789,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                     with gr.Accordion("Advanced Settings", open=False):
                         f0method0 = gr.Radio(
                             label="Optional: Change the Pitch Extraction Algorithm.",
-                            choices=["pm", "dio", "mangio-crepe-tiny", "crepe-tiny", "crepe", "mangio-crepe", "harvest"], # Fork Feature. Add Crepe-Tiny
+                            choices=["pm", "dio", "mangio-crepe-tiny", "crepe-tiny", "crepe", "mangio-crepe", "harvest","rmvpe"], # Fork Feature. Add Crepe-Tiny
                             value="mangio-crepe",
                             interactive=True,
                         )
