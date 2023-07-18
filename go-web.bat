@@ -1,2 +1,2 @@
-python.exe EasierGUI.py --pycmd python.exe --port 7897
+python.exe GUI.py --port 7897 
 pause
