@@ -1681,11 +1681,41 @@ def zip_downloader(model):
         return [f'./weights/{model}.pth', f'./logs/{model}/{log_file}'], "Done"
     else:
         return f'./weights/{model}.pth', "Could not find Index file."
+    
+def fast(filepath, spk_item, vc_transform0,f0method0,file_index1,index_rate1,filter_radius0, resample_sr0,rms_mix_rate0, protect0, hop):
+    # get VC first
+    print('\n Infering... \n')
+    source_audio_path = filepath
+    output_file_name = os.path.basename(filepath)
+    #print(vc_data)
+    conversion_data = vc_single(
+        spk_item,
+        source_audio_path,
+        vc_transform0,
+        f0_file,
+        f0method0,
+        file_index1,
+        index_rate1,
+        filter_radius0,
+        resample_sr0,
+        rms_mix_rate0,
+        protect0,
+        hop,        
+    )
+    print(conversion_data)
+    print(conversion_data[0])
+    print(conversion_data[1][0])
+    print(conversion_data[1][1])
+    if "Success." in conversion_data[0]:
+        wavfile.write(f'audio-outputs/{output_file_name}', conversion_data[1][0], conversion_data[1][1])
+        return f"audio-outputs/{output_file_name}", None, conversion_data[0]
+    else:
+        return gr.update(visible=True), None, conversion_data[0]
 
 with gr.Blocks(theme=gr.themes.Base()) as app:
     with gr.Tabs():
         with gr.TabItem("Inference"):
-            gr.HTML("<h1> Easy GUI v2 (rejekts) - adapted to Mangio-RVC-Fork 💻 </h1>")
+            gr.HTML("<h1> Rejekt's EasyGUI v2 (adapted from Mangio-RVC-Fork 💻) </h1>")
             # Inference Preset Row
             # with gr.Row():
             #     mangio_preset = gr.Dropdown(label="Inference Preset", choices=sorted(get_presets()))
@@ -1788,9 +1818,9 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                     animate_button.click(fn=mouth, inputs=[size, face, vc_output2, faces], outputs=[animation, preview])
                     with gr.Accordion("Advanced Settings", open=False):
                         f0method0 = gr.Radio(
-                            label="Optional: Change the Pitch Extraction Algorithm.",
-                            choices=["pm", "dio", "mangio-crepe-tiny", "crepe-tiny", "crepe", "mangio-crepe", "harvest","rmvpe"], # Fork Feature. Add Crepe-Tiny
-                            value="mangio-crepe",
+                            label="Optional: Change the Pitch Extraction Method.",
+                            choices=["pm", "rmvpe", "dio", "mangio-crepe-tiny", "crepe-tiny", "crepe", "mangio-crepe", "harvest"], # Fork Feature. Add Crepe-Tiny
+                            value="rmvpe",
                             interactive=True,
                         )
                         crepe_hop_length = gr.Slider(
@@ -1833,10 +1863,34 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                             step=0.01,
                             interactive=True,
                             )
+                    with gr.Accordion("Fast-Mode (TESTING)", open=False):
+                        fast_audio = gr.Audio(label="As soon as you stop recording, inference will start.",type="filepath", source="microphone", autoplay=False)
+                        fast_result = gr.Audio(label="Result",type="filepath", autoplay=True)
+                        
             with gr.Row():
-                vc_output1 = gr.Textbox("")
+                vc_output1 = gr.Textbox(label="Output Information:")
                 f0_file = gr.File(label=i18n("F0曲线文件, 可选, 一行一个音高, 代替默认F0及升降调"), visible=False)
-                
+                fast_audio.stop_recording(
+                    fn=fast,
+                    inputs=[
+                        fast_audio,
+                        spk_item,
+                        vc_transform0,
+                        f0method0,
+                        file_index1,
+                        index_rate1,
+                        filter_radius0,
+                        resample_sr0,
+                        rms_mix_rate0,
+                        protect0,
+                        crepe_hop_length
+                        ],
+                    outputs=[
+                        fast_result,
+                        fast_audio, 
+                        vc_output1
+                        ]
+                    )
                 but0.click(
                     vc_single,
                     [
@@ -2250,90 +2304,6 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
             json.dump(data, file)
             file.flush()
         print("Saved Preset %s into inference-presets.json!" % preset_name)
-
-
-    def on_preset_changed(preset_name):
-        print("Changed Preset to %s!" % preset_name)
-        data = None
-        with open('../inference-presets.json', 'r') as file:
-            data = json.load(file)
-
-        print("Searching for " + preset_name)
-        returning_preset = None
-        for preset in data['presets']:
-            if(preset['name'] == preset_name):
-                print("Found a preset")
-                returning_preset = preset
-        # return all new input values
-        return (
-            # returning_preset['model'],
-            # returning_preset['transpose'],
-            # returning_preset['audio_file'],
-            # returning_preset['f0_method'],
-            # returning_preset['crepe_hop_length'],
-            # returning_preset['median_filtering'],
-            # returning_preset['feature_path'],
-            # returning_preset['auto_feature_path'],
-            # returning_preset['search_feature_ratio'],
-            # returning_preset['resample'],
-            # returning_preset['volume_envelope'],
-            # returning_preset['protect_voiceless'],
-            # returning_preset['f0_file_path']
-        )
-
-    # Preset State Changes                
-    
-    # This click calls save_preset that saves the preset into inference-presets.json with the preset name
-    # mangio_preset_save_btn.click(
-    #     fn=save_preset, 
-    #     inputs=[
-    #         mangio_preset_name_save,
-    #         sid0,
-    #         vc_transform0,
-    #         input_audio0,
-    #         f0method0,
-    #         crepe_hop_length,
-    #         filter_radius0,
-    #         file_index1,
-    #         file_index2,
-    #         index_rate1,
-    #         resample_sr0,
-    #         rms_mix_rate0,
-    #         protect0,
-    #         f0_file
-    #     ], 
-    #     outputs=[]
-    # )
-
-    # mangio_preset.change(
-    #     on_preset_changed, 
-    #     inputs=[
-    #         # Pass inputs here
-    #         mangio_preset
-    #     ], 
-    #     outputs=[
-    #         # Pass Outputs here. These refer to the gradio elements that we want to directly change
-    #         # sid0,
-    #         # vc_transform0,
-    #         # input_audio0,
-    #         # f0method0,
-    #         # crepe_hop_length,
-    #         # filter_radius0,
-    #         # file_index1,
-    #         # file_index2,
-    #         # index_rate1,
-    #         # resample_sr0,
-    #         # rms_mix_rate0,
-    #         # protect0,
-    #         # f0_file
-    #     ]
-    # )
-
-
-        # with gr.TabItem(i18n("招募音高曲线前端编辑器")):
-        #     gr.Markdown(value=i18n("加开发群联系我xxxxx"))
-        # with gr.TabItem(i18n("点击查看交流、问题反馈群号")):
-        #     gr.Markdown(value=i18n("xxxxx"))
 
                 
     if config.iscolab or config.paperspace: # Share gradio link for colab and paperspace (FORK FEATURE)
