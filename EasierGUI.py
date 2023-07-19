@@ -73,7 +73,7 @@ else:
     gpu_info = i18n("很遗憾您这没有能用的显卡来支持您训练")
     default_batch_size = 1
 gpus = "-".join([i[0] for i in gpu_infos])
-from infer_pack.models import (
+from lib.infer_pack.models import (
     SynthesizerTrnMs256NSFsid,
     SynthesizerTrnMs256NSFsid_nono,
     SynthesizerTrnMs768NSFsid,
@@ -1110,7 +1110,7 @@ def change_info_(ckpt_path):
         return {"__type__": "update"}, {"__type__": "update"}, {"__type__": "update"}
 
 
-from infer_pack.models_onnx import SynthesizerTrnMsNSFsidM
+from lib.infer_pack.models_onnx import SynthesizerTrnMsNSFsidM
 
 
 def export_onnx(ModelPath, ExportedPath, MoeVS=True):
