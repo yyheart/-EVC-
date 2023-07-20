@@ -73,12 +73,9 @@ else:
     gpu_info = i18n("很遗憾您这没有能用的显卡来支持您训练")
     default_batch_size = 1
 gpus = "-".join([i[0] for i in gpu_infos])
-from infer_pack.models import (
-    SynthesizerTrnMs256NSFsid,
-    SynthesizerTrnMs256NSFsid_nono,
-    SynthesizerTrnMs768NSFsid,
-    SynthesizerTrnMs768NSFsid_nono,
-)
+
+from infer_pack.models import (SynthesizerTrnMs256NSFsid,SynthesizerTrnMs256NSFsid_nono,SynthesizerTrnMs768NSFsid,SynthesizerTrnMs768NSFsid_nono)
+
 import soundfile as sf
 from fairseq import checkpoint_utils
 import gradio as gr
@@ -143,13 +140,19 @@ def vc_single(
     rms_mix_rate,
     protect,
     crepe_hop_length,
+    root_location='./audios'
 ):  # spk_item, input_audio0, vc_transform0,f0_file,f0method0
     global tgt_sr, net_g, vc, hubert_model, version
     if input_audio_path is None:
-        return "You need to upload an audio", None
+        gr.Warning("You need to provide the path to an audio file")
+        return "You need to provide the path to an audio file", None
+    full_audio_path = root_location + '/' + input_audio_path
+    if not os.path.exists(full_audio_path):
+        gr.Warning(f"Could not find that file in audios/{input_audio_path}")
+        return f"Could not find that file in audios/{input_audio_path}", None
     f0_up_key = int(f0_up_key)
     try:
-        audio = load_audio(input_audio_path, 16000)
+        audio = load_audio(full_audio_path, 16000)
         audio_max = np.abs(audio).max() / 0.95
         if audio_max > 1:
             audio /= audio_max
@@ -199,6 +202,7 @@ def vc_single(
             if os.path.exists(file_index)
             else "Index not used."
         )
+        gr.Info('Success.')
         return "Success.\n %s\nTime:\n npy:%ss, f0:%ss, infer:%ss" % (
             index_info,
             times[0],
@@ -515,6 +519,7 @@ def preprocess_dataset(trainset_dir, exp_dir, sr, n_p):
     with open("%s/logs/%s/preprocess.log" % (now_dir, exp_dir), "r") as f:
         log = f.read()
     print(log)
+    gr.Info("End Preprocess means you're done with this step. Go to step 2.")
     yield log
 
 
@@ -554,6 +559,7 @@ def extract_f0_feature(gpus, n_p, f0method, if_f0, exp_dir, version19, echl):
         with open("%s/logs/%s/extract_f0_feature.log" % (now_dir, exp_dir), "r") as f:
             log = f.read()
         print(log)
+        gr.Info('Wait to see "all feature done" in the status box to know it finished.')
         yield log
     ####对不同part分别开多进程
     """
@@ -789,7 +795,8 @@ def click_train(
     print(cmd)
     p = Popen(cmd, shell=True, cwd=now_dir)
     p.wait()
-    return "训练结束, 您可查看控制台训练日志或实验文件夹下的train.log"
+    gr.Warning('Done! Check your console in Colab to see if it trained successfully.')
+    return 'Done! Check your console in Colab to see if it trained successfully.'
 
 
 # but4.click(train_index, [exp_dir1], info3)
@@ -849,6 +856,7 @@ def train_index(exp_dir1, version19):
     )
     # faiss.write_index(index, '%s/added_IVF%s_Flat_FastScan_%s.index'%(exp_dir,n_ivf,version19))
     # infos.append("成功构建索引，added_IVF%s_Flat_FastScan_%s.index"%(n_ivf,version19))
+    gr.Info('Successfully trained the index file!')
     yield "\n".join(infos)
 
 
@@ -1477,7 +1485,7 @@ def change_choices2():
     audio_files=[]
     for filename in os.listdir("./audios"):
         if filename.endswith(('.wav','.mp3','.ogg')):
-            audio_files.append(os.path.join('./audios',filename))
+            audio_files.append(filename)
     return {"choices": sorted(audio_files), "__type__": "update"}, {"__type__": "update"}
     
 audio_files=[]
@@ -1485,7 +1493,7 @@ if not os.path.exists('audios'):
     os.mkdir('audios')
 for filename in os.listdir("./audios"):
     if filename.endswith(('.wav','.mp3','.ogg')):
-        audio_files.append(os.path.join('./audios',filename))
+        audio_files.append(filename)
         
 def get_index():
     if check_for_name() != '':
@@ -1524,12 +1532,12 @@ def save_to_wav(record_button):
         new_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")+'.wav'
         new_path='./audios/'+new_name
         shutil.move(path_to_file,new_path)
-        return new_path
+        return os.path.basename(new_path)
     
 def save_to_wav2(dropbox):
     file_path=dropbox.name
     shutil.move(file_path,'./audios')
-    return os.path.join('./audios',os.path.basename(file_path))
+    return os.path.basename(file_path)
     
 def match_index(sid0):
     folder=sid0.split(".")[0]
@@ -1660,6 +1668,7 @@ def elevenTTS(xiapi, text, id, lang):
         return aud_path, aud_path
 
 def upload_to_dataset(files, dir):
+    gr.Warning('Wait until your data is uploaded...')
     if dir == '':
         dir = './dataset'
     if not os.path.exists(dir):
@@ -1669,6 +1678,7 @@ def upload_to_dataset(files, dir):
         path=file.name
         shutil.copy2(path,dir)
         count += 1
+    gr.Info(f'Done! {count} files were uploaded. Now click "1.Process The Dataset."')
     return f' {count} files uploaded to {dir}.'     
     
 def zip_downloader(model):
@@ -1699,7 +1709,8 @@ def fast(filepath, spk_item, vc_transform0,f0method0,file_index1,index_rate1,fil
         resample_sr0,
         rms_mix_rate0,
         protect0,
-        hop,        
+        hop,
+        ""        
     )
     if "Success." in conversion_data[0]:
         wavfile.write(f'audio-outputs/{output_file_name}', conversion_data[1][0], conversion_data[1][1])
@@ -1752,7 +1763,7 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                     with gr.Row():
                         input_audio0 = gr.Dropdown(
                             label="2.Choose your audio.",
-                            value="./audios/someguy.mp3",
+                            value="someguy.mp3",
                             choices=audio_files
                             )
                         dropbox.upload(fn=save_to_wav2, inputs=[dropbox], outputs=[input_audio0])
@@ -1907,123 +1918,6 @@ with gr.Blocks(theme=gr.themes.Base()) as app:
                     [vc_output1, vc_output2],
                 )
                         
-            with gr.Accordion("Batch Conversion",open=False):
-                with gr.Row():
-                    with gr.Column():
-                        vc_transform1 = gr.Number(
-                            label=i18n("变调(整数, 半音数量, 升八度12降八度-12)"), value=0
-                        )
-                        opt_input = gr.Textbox(label=i18n("指定输出文件夹"), value="opt")
-                        f0method1 = gr.Radio(
-                            label=i18n(
-                                "选择音高提取算法,输入歌声可用pm提速,harvest低音好但巨慢无比,crepe效果好但吃GPU"
-                            ),
-                            choices=["pm", "harvest", "crepe"],
-                            value="pm",
-                            interactive=True,
-                        )
-                        filter_radius1 = gr.Slider(
-                            minimum=0,
-                            maximum=7,
-                            label=i18n(">=3则使用对harvest音高识别的结果使用中值滤波，数值为滤波半径，使用可以削弱哑音"),
-                            value=3,
-                            step=1,
-                            interactive=True,
-                        )
-                    with gr.Column():
-                        file_index3 = gr.Textbox(
-                            label=i18n("特征检索库文件路径,为空则使用下拉的选择结果"),
-                            value="",
-                            interactive=True,
-                        )
-                        file_index4 = gr.Dropdown(
-                            label=i18n("自动检测index路径,下拉式选择(dropdown)"),
-                            choices=sorted(index_paths),
-                            interactive=True,
-                        )
-                        refresh_button.click(
-                            fn=lambda: change_choices()[1],
-                            inputs=[],
-                            outputs=file_index4,
-                        )
-                        # file_big_npy2 = gr.Textbox(
-                        #     label=i18n("特征文件路径"),
-                        #     value="E:\\codes\\py39\\vits_vc_gpu_train\\logs\\mi-test-1key\\total_fea.npy",
-                        #     interactive=True,
-                        # )
-                        index_rate2 = gr.Slider(
-                            minimum=0,
-                            maximum=1,
-                            label=i18n("检索特征占比"),
-                            value=1,
-                            interactive=True,
-                        )
-                    with gr.Column():
-                        resample_sr1 = gr.Slider(
-                            minimum=0,
-                            maximum=48000,
-                            label=i18n("后处理重采样至最终采样率，0为不进行重采样"),
-                            value=0,
-                            step=1,
-                            interactive=True,
-                        )
-                        rms_mix_rate1 = gr.Slider(
-                            minimum=0,
-                            maximum=1,
-                            label=i18n("输入源音量包络替换输出音量包络融合比例，越靠近1越使用输出包络"),
-                            value=1,
-                            interactive=True,
-                        )
-                        protect1 = gr.Slider(
-                            minimum=0,
-                            maximum=0.5,
-                            label=i18n(
-                                "保护清辅音和呼吸声，防止电音撕裂等artifact，拉满0.5不开启，调低加大保护力度但可能降低索引效果"
-                            ),
-                            value=0.33,
-                            step=0.01,
-                            interactive=True,
-                        )
-                    with gr.Column():
-                        dir_input = gr.Textbox(
-                            label=i18n("输入待处理音频文件夹路径(去文件管理器地址栏拷就行了)"),
-                            value="E:\codes\py39\\test-20230416b\\todo-songs",
-                        )
-                        inputs = gr.File(
-                            file_count="multiple", label=i18n("也可批量输入音频文件, 二选一, 优先读文件夹")
-                        )
-                    with gr.Row():
-                        format1 = gr.Radio(
-                            label=i18n("导出文件格式"),
-                            choices=["wav", "flac", "mp3", "m4a"],
-                            value="flac",
-                            interactive=True,
-                        )
-                        but1 = gr.Button(i18n("转换"), variant="primary")
-                        vc_output3 = gr.Textbox(label=i18n("输出信息"))
-                    but1.click(
-                        vc_multi,
-                        [
-                            spk_item,
-                            dir_input,
-                            opt_input,
-                            inputs,
-                            vc_transform1,
-                            f0method1,
-                            file_index3,
-                            file_index4,
-                            # file_big_npy2,
-                            index_rate2,
-                            filter_radius1,
-                            resample_sr1,
-                            rms_mix_rate1,
-                            protect1,
-                            format1,
-                            crepe_hop_length,
-                        ],
-                        [vc_output3],
-                    )
-                    but1.click(fn=lambda: easy_uploader.clear())
         with gr.TabItem("Download Model"):
             with gr.Row():
                 url=gr.Textbox(label="Enter the URL to the Model:")
