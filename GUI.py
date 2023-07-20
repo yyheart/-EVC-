@@ -1476,7 +1476,7 @@ def get_presets():
 def change_choices2():
     audio_files=[]
     for filename in os.listdir("./audios"):
-        if filename.endswith(('.wav','.mp3')):
+        if filename.endswith(('.wav','.mp3','.ogg')):
             audio_files.append(os.path.join('./audios',filename))
     return {"choices": sorted(audio_files), "__type__": "update"}, {"__type__": "update"}
     
@@ -1484,7 +1484,7 @@ audio_files=[]
 if not os.path.exists('audios'): 
     os.mkdir('audios')
 for filename in os.listdir("./audios"):
-    if filename.endswith(('.wav','.mp3')):
+    if filename.endswith(('.wav','.mp3','.ogg')):
         audio_files.append(os.path.join('./audios',filename))
         
 def get_index():
