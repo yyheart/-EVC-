@@ -1481,6 +1481,8 @@ def change_choices2():
     return {"choices": sorted(audio_files), "__type__": "update"}, {"__type__": "update"}
     
 audio_files=[]
+if not os.path.exists('audios'): 
+    os.mkdir('audios')
 for filename in os.listdir("./audios"):
     if filename.endswith(('.wav','.mp3')):
         audio_files.append(os.path.join('./audios',filename))
@@ -1683,11 +1685,8 @@ def zip_downloader(model):
         return f'./weights/{model}.pth', "Could not find Index file."
     
 def fast(filepath, spk_item, vc_transform0,f0method0,file_index1,index_rate1,filter_radius0, resample_sr0,rms_mix_rate0, protect0, hop):
-    # get VC first
-    print('\n Infering... \n')
     source_audio_path = filepath
     output_file_name = os.path.basename(filepath)
-    #print(vc_data)
     conversion_data = vc_single(
         spk_item,
         source_audio_path,
@@ -1702,10 +1701,6 @@ def fast(filepath, spk_item, vc_transform0,f0method0,file_index1,index_rate1,fil
         protect0,
         hop,        
     )
-    print(conversion_data)
-    print(conversion_data[0])
-    print(conversion_data[1][0])
-    print(conversion_data[1][1])
     if "Success." in conversion_data[0]:
         wavfile.write(f'audio-outputs/{output_file_name}', conversion_data[1][0], conversion_data[1][1])
         return f"audio-outputs/{output_file_name}", None, conversion_data[0]
